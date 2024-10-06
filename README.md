@@ -1,6 +1,6 @@
 # ClassTable
 
-通过 wakeupAPI 导入课表实现定时上课提醒
+本功能通过 wakeup 课程表 APP 的 API 抓包导入，如需订阅提醒请把你的 wakeup 课程表分享链接发到群里，卷卷会自动识别并调用导入，如需取消订阅，请发送“取消课程表订阅”或“classtableoff”
 
 ## 更新日志
 

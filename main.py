@@ -55,6 +55,18 @@ async def get_course_schedule_from_api(share_code):
             return json_data
 
 
+# 课程表菜单
+async def classtable_menu(websocket, group_id, message_id):
+    await send_group_msg(
+        websocket,
+        group_id,
+        f"[CQ:reply,id={message_id}]本功能通过wakeup课程表APP的API抓包导入\n"
+        + f"如需订阅提醒请把你的wakeup课程表分享链接发到群里，卷卷会自动识别并调用导入\n"
+        + f"如需取消订阅，请发送“取消课程表订阅”或“classtableoff”\n"
+        + f"开源地址：https://github.com/W1ndys-bot/ClassTable",
+    )
+
+
 # 群消息处理函数
 async def handle_ClassTable_group_message(websocket, msg):
     # 确保数据目录存在
@@ -67,8 +79,13 @@ async def handle_ClassTable_group_message(websocket, msg):
         role = str(msg.get("sender", {}).get("role"))
         message_id = str(msg.get("message_id"))
 
+        # 课程表菜单
+        if raw_message == "classtable" or raw_message == "课程表":
+            await classtable_menu(websocket, group_id, message_id)
+            return
+
         # 取消该群订阅
-        if raw_message == "取消课程表订阅":
+        if raw_message == "取消课程表订阅" or raw_message == "classtableoff":
             # 删除对应文件
             os.remove(os.path.join(DATA_DIR, f"{user_id}_{group_id}.json"))
             await send_group_msg(
@@ -122,7 +139,7 @@ async def handle_ClassTable_group_message(websocket, msg):
                     await send_group_msg(
                         websocket,
                         group_id,
-                        f"[CQ:reply,id={message_id}]导入课程表成功，重复导入将会覆盖之前的数据",
+                        f"[CQ:reply,id={message_id}]导入课程表成功，重复导入将会覆盖之前的数据，你的分享口令是{share_code}",
                     )
                 else:
                     logging.warning(f"导入课程表失败: {json_data}")
