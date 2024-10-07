@@ -32,7 +32,7 @@ def calculate_current_week(start_date, current_date):
 
 def check_for_reminders(schedule, start_date=datetime(2024, 8, 26), test_time=None):
     current_time = test_time or datetime.now()
-    print(current_time)
+    # print(current_time)
     current_week = calculate_current_week(start_date, current_time)
 
     # 获取今天是星期几，Python的weekday()方法返回0-6，代表周一到周日
@@ -63,7 +63,7 @@ def check_for_reminders(schedule, start_date=datetime(2024, 8, 26), test_time=No
                         + f"开始时间: {course['startTime']}\n"
                         + f"=========课程提醒=========\n"
                         + f"当前时间: {current_time.strftime('%H:%M')}\n"
-                        + f"技术支持：W1ndys\n"
+                        + f"技术支持：www.w1ndys.top\n"
                     )
     return None  # 确保在没有符合条件的课程时返回None
 
