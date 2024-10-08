@@ -39,9 +39,11 @@ def check_for_reminders(schedule, start_date=datetime(2024, 8, 26), test_time=No
     current_day = str(current_time.weekday() + 1)  # 转换为1-7，代表周一到周日
     # print(f"当前星期: {current_day}")
     if current_week in schedule and current_day in schedule[current_week]:
-        periods = schedule[current_week][current_day]
-        for period, classes in periods.items():
+        periods = schedule[current_week][current_day]  # 获取当前星期的课程表
+        for period, classes in periods.items():  # 遍历当前星期的所有课程
             for course in classes:
+
+                # 检查当前课程是否在上课时间
                 start_time_str = course["startTime"]
                 start_time = datetime.strptime(start_time_str, "%H:%M")
                 # 将日期设为今天，以便比较时间
@@ -52,6 +54,18 @@ def check_for_reminders(schedule, start_date=datetime(2024, 8, 26), test_time=No
                 )
                 # 计算时间差
                 time_diff = start_time - current_time
+
+                # 检查当天上一节课是否与当前课程一样
+                previous_period = str(int(period) - 1)
+                if previous_period in periods:
+                    previous_classes = periods[previous_period]
+                    for previous_course in previous_classes:
+                        if previous_course["courseId"] == course["courseId"]:
+                            # print(
+                            #     f"上一节课与当前课程一样：{previous_course['courseName']}"
+                            # )
+                            return None
+
                 # 仅在时间差在29到30分钟之间时返回提醒
                 if 29 * 60 <= time_diff.total_seconds() < 30 * 60:
                     return (
@@ -63,7 +77,7 @@ def check_for_reminders(schedule, start_date=datetime(2024, 8, 26), test_time=No
                         + f"开始时间: {course['startTime']}\n"
                         + f"=========课程提醒=========\n"
                         + f"当前时间: {current_time.strftime('%H:%M')}\n"
-                        + f"技术支持：www.w1ndys.top\n"
+                        + f"技术支持：www.w1ndys.top"
                     )
     return None  # 确保在没有符合条件的课程时返回None
 
