@@ -32,12 +32,17 @@ def calculate_current_week(start_date, current_date):
 
 def check_for_reminders(schedule, start_date=datetime(2024, 8, 26), test_time=None):
     current_time = test_time or datetime.now()
-    # print(current_time)
+
     current_week = calculate_current_week(start_date, current_time)
 
     # 获取今天是星期几，Python的weekday()方法返回0-6，代表周一到周日
     current_day = str(current_time.weekday() + 1)  # 转换为1-7，代表周一到周日
-    # print(f"当前星期: {current_day}")
+
+    # 调试信息
+    print(f"当前周次: {current_week}")
+    print(f"当前星期: {current_day}")
+    print(f"当前时间: {current_time}")
+
     if current_week in schedule and current_day in schedule[current_week]:
         periods = schedule[current_week][current_day]  # 获取当前星期的课程表
         for period, classes in periods.items():  # 遍历当前星期的所有课程
@@ -55,19 +60,21 @@ def check_for_reminders(schedule, start_date=datetime(2024, 8, 26), test_time=No
                 # 计算时间差
                 time_diff = start_time - current_time
 
-                # 检查当天上一节课是否与当前课程一样
-                previous_period = str(int(period) - 1)
-                if previous_period in periods:
-                    previous_classes = periods[previous_period]
-                    for previous_course in previous_classes:
-                        if previous_course["courseId"] == course["courseId"]:
-                            # print(
-                            #     f"上一节课与当前课程一样：{previous_course['courseName']}"
-                            # )
+                # 仅在时间差在59到60分钟和25到26分钟之间时返回提醒
+                if (
+                    59 * 60 <= time_diff.total_seconds() < 60 * 60
+                    or 25 * 60 <= time_diff.total_seconds() < 26 * 60
+                ):
+
+                    # 检查当天上一节课是否与当前课程一样
+                    previous_period = str(int(period) - 1)
+                    if previous_period in periods:
+                        previous_classes = periods[previous_period]
+                        for previous_course in previous_classes:
+                            print(f"上一节课：{previous_course}")
+                            print(f"当前课程：{course}")
                             return None
 
-                # 仅在时间差在29到30分钟之间时返回提醒
-                if 29 * 60 <= time_diff.total_seconds() < 30 * 60:
                     return (
                         f"=========课程提醒=========\n"
                         + f"日期: {current_time.strftime('%Y-%m-%d')}\n"
@@ -79,6 +86,8 @@ def check_for_reminders(schedule, start_date=datetime(2024, 8, 26), test_time=No
                         + f"当前时间: {current_time.strftime('%H:%M')}\n"
                         + f"技术支持：www.w1ndys.top"
                     )
+
+    print(f"没有符合条件的课程")
     return None  # 确保在没有符合条件的课程时返回None
 
 

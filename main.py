@@ -168,7 +168,7 @@ async def check_and_push_course_schedule(websocket):
     start_date = datetime(2024, 8, 26)
 
     # 设置测试时间（例如，设置为某个特定的时间）
-    test_time = datetime.now().replace(hour=10, minute=40)
+    # test_time = datetime.now().replace(hour=10, minute=40)
 
     # 遍历所有保存的文件
     for file in os.listdir(DATA_DIR):
@@ -180,7 +180,7 @@ async def check_and_push_course_schedule(websocket):
             file_path = os.path.join(DATA_DIR, file)
             schedule_data = load_schedule_from_file(file_path)
 
-            reminder_message = check_for_reminders(schedule_data, start_date, test_time)
+            reminder_message = check_for_reminders(schedule_data, start_date)
             logging.info(f"加载{user_id}在{group_id}的课程表完成")
 
             if reminder_message:
