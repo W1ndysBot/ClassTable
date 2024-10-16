@@ -168,7 +168,7 @@ async def check_and_push_course_schedule(websocket):
     start_date = datetime(2024, 8, 26)
 
     # 设置测试时间（例如，设置为某个特定的时间）
-    # test_time = datetime.now().replace(hour=10, minute=40)
+    # test_time = datetime.now().replace(hour=15, minute=0)
 
     # 遍历所有保存的文件
     for file in os.listdir(DATA_DIR):
