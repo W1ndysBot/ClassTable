@@ -60,10 +60,10 @@ def check_for_reminders(schedule, start_date=datetime(2024, 8, 26), test_time=No
                 # 计算时间差
                 time_diff = start_time - current_time
 
-                # 仅在时间差在59到60分钟和25到26分钟之间时返回提醒
+                # 仅在时间差在14到15分钟和29到30分钟之间时返回提醒
                 if (
-                    59 * 60 <= time_diff.total_seconds() < 60 * 60
-                    or 25 * 60 <= time_diff.total_seconds() < 26 * 60
+                    14 * 60 <= time_diff.total_seconds() < 15 * 60
+                    or 29 * 60 <= time_diff.total_seconds() < 30 * 60
                 ):
 
                     # 检查当天上一节课是否与当前课程一样
