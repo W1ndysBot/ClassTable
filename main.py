@@ -106,7 +106,7 @@ async def handle_ClassTable_group_message(websocket, msg):
             delete_message_id = await send_group_msg_with_reply(
                 websocket,
                 group_id,
-                f"[CQ:reply,id={message_id}][+]检测到分享口令，正在导入课程表，为避免口令泄露，请自行撤回分享口令",
+                f"[CQ:reply,id={message_id}][+]检测到分享口令，正在请求API，为避免口令泄露，请确定自行撤回分享口令",
             )
 
             # 提取分享口令
@@ -118,8 +118,10 @@ async def handle_ClassTable_group_message(websocket, msg):
                 logging.info(f"提取到分享口令: {match.group(1)}")
                 share_code = match.group(1)
 
-                # 调用API返回json
-                json_data = await get_course_schedule_from_api(share_code)
+                # 异步调用API返回json
+                json_data = await asyncio.create_task(
+                    get_course_schedule_from_api(share_code)
+                )
 
                 # print(json_data)
 
@@ -130,12 +132,24 @@ async def handle_ClassTable_group_message(websocket, msg):
                 ):
 
                     logging.info(f"调用API返回json完成")
+                    delete_message_id = await send_group_msg_with_reply(
+                        websocket,
+                        group_id,
+                        f"[CQ:reply,id={message_id}][+]调用API返回json完成，正在转换json",
+                    )
                     # print(json_data)
                     # 将json数据转换为课程表
                     course_schedule = generate_course_schedule_from_data(json_data)
 
                     logging.info(f"将json数据转换为课程表完成")
 
+                    await delete_msg(websocket, delete_message_id)
+
+                    delete_message_id = await send_group_msg_with_reply(
+                        websocket,
+                        group_id,
+                        f"[CQ:reply,id={message_id}][+]将json数据转换为课程表完成，正在保存课程表",
+                    )
                     # 保存课程表到文件
                     with open(
                         os.path.join(DATA_DIR, f"{user_id}_{group_id}.json"),
@@ -145,9 +159,13 @@ async def handle_ClassTable_group_message(websocket, msg):
                         json.dump(course_schedule, file, ensure_ascii=False, indent=4)
 
                     logging.info(f"保存课程表到文件完成")
+
+                    await delete_msg(websocket, delete_message_id)
+
                     share_code = (
                         share_code[:2] + "*" * (len(share_code) - 4) + share_code[-2:]
                     )
+
                     await send_group_msg(
                         websocket,
                         group_id,
@@ -203,10 +221,11 @@ async def check_and_push_course_schedule(websocket):
             file_path = os.path.join(DATA_DIR, file)
             schedule_data = load_schedule_from_file(file_path)
 
-            reminder_message = check_for_reminders(schedule_data, start_date)
+            reminder_message = check_for_reminders(
+                user_id, group_id, schedule_data, start_date
+            )
             logging.info(f"加载{user_id}在{group_id}的课程表完成")
 
             if reminder_message:
-                logging.info(f"检测到{user_id}在{group_id}的课程提醒有即将开始的课程")
                 reminder_message = f"[CQ:at,qq={user_id}]\n" + reminder_message
                 await send_group_msg(websocket, group_id, reminder_message)
