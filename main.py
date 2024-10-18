@@ -101,6 +101,14 @@ async def handle_ClassTable_group_message(websocket, msg):
         ):
             # 撤回消息
             await delete_msg(websocket, message_id)
+
+            # 发出检测到分享口令的提示
+            delete_message_id = await send_group_msg_with_reply(
+                websocket,
+                group_id,
+                f"[CQ:reply,id={message_id}][+]检测到分享口令，正在导入课程表，为避免口令泄露，请自行撤回分享口令",
+            )
+
             # 提取分享口令
             match = re.search(
                 r"这是来自「WakeUp课程表」的课表分享，30分钟内有效哦，如果失效请朋友再分享一遍叭。为了保护隐私我们选择不监听你的剪贴板，请复制这条消息后，打开App的主界面，右上角第二个按钮 -> 从分享口令导入，按操作提示即可完成导入~分享口令为「(.*)」",
@@ -146,6 +154,9 @@ async def handle_ClassTable_group_message(websocket, msg):
                         f"[CQ:reply,id={message_id}]导入课程表成功，重复导入将会覆盖之前的数据，你的分享口令是{share_code}",
                     )
 
+                    # 撤回上一条消息
+                    await delete_msg(websocket, delete_message_id)
+
                 else:
                     logging.warning(f"导入课程表失败: {json_data}")
                     await send_group_msg(
@@ -155,6 +166,9 @@ async def handle_ClassTable_group_message(websocket, msg):
                         + f"错误返回值: {json_data}",
                     )
 
+                    # 撤回上一条消息
+                    await delete_msg(websocket, delete_message_id)
+
     except Exception as e:
         logging.error(f"处理ClassTable群消息失败: {e}")
         await send_group_msg(
@@ -163,6 +177,10 @@ async def handle_ClassTable_group_message(websocket, msg):
             f"[CQ:reply,id={message_id}]导入课程表失败，请联系开发者处理，发送“owner”联系开发者QQ\n\n"
             + f"错误信息: {e}",
         )
+
+        # 撤回上一条消息
+        await delete_msg(websocket, delete_message_id)
+
         return
 
 
