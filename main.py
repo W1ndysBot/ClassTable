@@ -99,6 +99,8 @@ async def handle_ClassTable_group_message(websocket, msg):
         if raw_message.startswith(
             "这是来自「WakeUp课程表」的课表分享，30分钟内有效哦，如果失效请朋友再分享一遍叭。为了保护隐私我们选择不监听你的剪贴板，请复制这条消息后，打开App的主界面，右上角第二个按钮 -> 从分享口令导入，按操作提示即可完成导入~分享口令为「"
         ):
+            # 撤回消息
+            await delete_msg(websocket, message_id)
             # 提取分享口令
             match = re.search(
                 r"这是来自「WakeUp课程表」的课表分享，30分钟内有效哦，如果失效请朋友再分享一遍叭。为了保护隐私我们选择不监听你的剪贴板，请复制这条消息后，打开App的主界面，右上角第二个按钮 -> 从分享口令导入，按操作提示即可完成导入~分享口令为「(.*)」",
@@ -135,12 +137,15 @@ async def handle_ClassTable_group_message(websocket, msg):
                         json.dump(course_schedule, file, ensure_ascii=False, indent=4)
 
                     logging.info(f"保存课程表到文件完成")
-
+                    share_code = (
+                        share_code[:2] + "*" * (len(share_code) - 4) + share_code[-2:]
+                    )
                     await send_group_msg(
                         websocket,
                         group_id,
                         f"[CQ:reply,id={message_id}]导入课程表成功，重复导入将会覆盖之前的数据，你的分享口令是{share_code}",
                     )
+
                 else:
                     logging.warning(f"导入课程表失败: {json_data}")
                     await send_group_msg(
@@ -168,7 +173,7 @@ async def check_and_push_course_schedule(websocket):
     start_date = datetime(2024, 8, 26)
 
     # 设置测试时间（例如，设置为某个特定的时间）
-    # test_time = datetime.now().replace(hour=15, minute=0)
+    test_time = datetime.now().replace(hour=13, minute=45)
 
     # 遍历所有保存的文件
     for file in os.listdir(DATA_DIR):
@@ -180,7 +185,7 @@ async def check_and_push_course_schedule(websocket):
             file_path = os.path.join(DATA_DIR, file)
             schedule_data = load_schedule_from_file(file_path)
 
-            reminder_message = check_for_reminders(schedule_data, start_date)
+            reminder_message = check_for_reminders(schedule_data, start_date, test_time)
             logging.info(f"加载{user_id}在{group_id}的课程表完成")
 
             if reminder_message:
