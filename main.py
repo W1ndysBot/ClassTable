@@ -215,8 +215,8 @@ async def check_and_push_course_schedule(websocket):
     for file in os.listdir(DATA_DIR):
         if file.endswith(".json"):
             # 解析文件名，提取群号和QQ号
-            user_id = file.split("_")[0]
-            group_id = file.split("_")[1].split(".")[0]
+            group_id = file.split("_")[0]
+            user_id = file.split("_")[1].split(".")[0]
 
             file_path = os.path.join(DATA_DIR, file)
             schedule_data = load_schedule_from_file(file_path)

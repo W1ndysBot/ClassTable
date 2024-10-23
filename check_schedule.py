@@ -42,9 +42,9 @@ def check_for_reminders(
     current_day = str(current_time.weekday() + 1)  # 转换为1-7，代表周一到周日
 
     # 调试信息
-    print(f"当前周次: {current_week}")
-    print(f"当前星期: {current_day}")
-    print(f"当前时间: {current_time}")
+    # print(f"当前周次: {current_week}")
+    # print(f"当前星期: {current_day}")
+    # print(f"当前时间: {current_time}")
 
     if current_week in schedule and current_day in schedule[current_week]:
         periods = schedule[current_week][current_day]  # 获取当前星期的课程表
