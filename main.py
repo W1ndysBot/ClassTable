@@ -96,15 +96,21 @@ async def check_today_course_schedule(websocket, user_id, group_id, message_id):
         await send_group_msg(websocket, group_id, message)
     except IndexError:
         await send_group_msg(
-            websocket, group_id, f"[CQ:reply,id={message_id}]未找到匹配的课表文件"
+            websocket,
+            group_id,
+            f"[CQ:reply,id={message_id}]未找到匹配的课表文件，发送“classtable”或“课程表”查看说明",
         )
     except FileNotFoundError:
         await send_group_msg(
-            websocket, group_id, f"[CQ:reply,id={message_id}]课表文件不存在"
+            websocket,
+            group_id,
+            f"[CQ:reply,id={message_id}]课表文件不存在，发送“classtable”或“课程表”查看说明",
         )
     except Exception as e:
         await send_group_msg(
-            websocket, group_id, f"[CQ:reply,id={message_id}]发生错误: {str(e)}"
+            websocket,
+            group_id,
+            f"[CQ:reply,id={message_id}]发生错误: {str(e)}\n\n发送“classtable”或“课程表”查看说明",
         )
 
 
