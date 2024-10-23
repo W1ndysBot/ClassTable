@@ -87,7 +87,7 @@ async def handle_ClassTable_group_message(websocket, msg):
         # 取消该群订阅
         if raw_message == "取消课程表订阅" or raw_message == "classtableoff":
             # 删除对应文件
-            os.remove(os.path.join(DATA_DIR, f"{user_id}_{group_id}.json"))
+            os.remove(os.path.join(DATA_DIR, f"{group_id}_{user_id}.json"))
             await send_group_msg(
                 websocket,
                 group_id,
@@ -103,7 +103,7 @@ async def handle_ClassTable_group_message(websocket, msg):
             await delete_msg(websocket, message_id)
 
             # 发出检测到分享口令的提示
-            delete_message_id = await send_group_msg_with_reply(
+            await send_group_msg_with_reply(
                 websocket,
                 group_id,
                 f"[CQ:reply,id={message_id}][+]检测到分享口令，正在请求API，为避免口令泄露，请确定自行撤回分享口令",
@@ -115,15 +115,13 @@ async def handle_ClassTable_group_message(websocket, msg):
                 raw_message,
             )
             if match:
-                logging.info(f"提取到分享口令: {match.group(1)}")
+
+                logging.info(f"提取到{user_id}在{group_id}的分享口令: {match.group(1)}")
+
                 share_code = match.group(1)
 
                 # 异步调用API返回json
-                json_data = await asyncio.create_task(
-                    get_course_schedule_from_api(share_code)
-                )
-
-                # print(json_data)
+                json_data = await get_course_schedule_from_api(share_code)
 
                 if (
                     json_data["status"] == "1"
@@ -131,36 +129,18 @@ async def handle_ClassTable_group_message(websocket, msg):
                     and json_data["data"] != ""
                 ):
 
-                    logging.info(f"调用API返回json完成")
-                    delete_message_id = await send_group_msg_with_reply(
-                        websocket,
-                        group_id,
-                        f"[CQ:reply,id={message_id}][+]调用API返回json完成，正在转换json",
-                    )
-                    # print(json_data)
                     # 将json数据转换为课程表
                     course_schedule = generate_course_schedule_from_data(json_data)
 
-                    logging.info(f"将json数据转换为课程表完成")
-
-                    await delete_msg(websocket, delete_message_id)
-
-                    delete_message_id = await send_group_msg_with_reply(
-                        websocket,
-                        group_id,
-                        f"[CQ:reply,id={message_id}][+]将json数据转换为课程表完成，正在保存课程表",
-                    )
                     # 保存课程表到文件
                     with open(
-                        os.path.join(DATA_DIR, f"{user_id}_{group_id}.json"),
+                        os.path.join(DATA_DIR, f"{group_id}_{user_id}.json"),
                         "w",
                         encoding="utf-8",
                     ) as file:
                         json.dump(course_schedule, file, ensure_ascii=False, indent=4)
 
                     logging.info(f"保存课程表到文件完成")
-
-                    await delete_msg(websocket, delete_message_id)
 
                     share_code = (
                         share_code[:2] + "*" * (len(share_code) - 4) + share_code[-2:]
@@ -172,9 +152,6 @@ async def handle_ClassTable_group_message(websocket, msg):
                         f"[CQ:reply,id={message_id}]导入课程表成功，重复导入将会覆盖之前的数据，你的分享口令是{share_code}",
                     )
 
-                    # 撤回上一条消息
-                    await delete_msg(websocket, delete_message_id)
-
                 else:
                     logging.warning(f"导入课程表失败: {json_data}")
                     await send_group_msg(
@@ -184,9 +161,6 @@ async def handle_ClassTable_group_message(websocket, msg):
                         + f"错误返回值: {json_data}",
                     )
 
-                    # 撤回上一条消息
-                    await delete_msg(websocket, delete_message_id)
-
     except Exception as e:
         logging.error(f"处理ClassTable群消息失败: {e}")
         await send_group_msg(
@@ -195,9 +169,6 @@ async def handle_ClassTable_group_message(websocket, msg):
             f"[CQ:reply,id={message_id}]导入课程表失败，请联系开发者处理，发送“owner”联系开发者QQ\n\n"
             + f"错误信息: {e}",
         )
-
-        # 撤回上一条消息
-        await delete_msg(websocket, delete_message_id)
 
         return
 
