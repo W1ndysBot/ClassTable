@@ -21,21 +21,8 @@ def print_schedule(schedule):
 
 
 def load_schedule_from_file(file_path):
-    try:
-        with open(file_path, "r", encoding="utf-8") as file:
-            return json.load(file)
-    except FileNotFoundError:
-        error_message = f"文件未找到: {file_path}"
-        logging.error(error_message)
-        return {"error": error_message}
-    except json.JSONDecodeError:
-        error_message = f"JSON解码错误: {file_path}"
-        logging.error(error_message)
-        return {"error": error_message}
-    except Exception as e:
-        error_message = f"加载课表文件时发生未知错误: {e}"
-        logging.error(error_message)
-        return {"error": error_message}
+    with open(file_path, "r", encoding="utf-8") as file:
+        return json.load(file)
 
 
 def calculate_current_week(start_date, current_date):

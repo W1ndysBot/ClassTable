@@ -74,35 +74,38 @@ async def classtable_menu(websocket, group_id, message_id):
 
 # 查看今日课表
 async def check_today_course_schedule(websocket, user_id, group_id, message_id):
+    try:
+        # 正则匹配课表文件路径
+        file_path_pattern = os.path.join(DATA_DIR, f"*{user_id}.json")
 
-    # 正则匹配课表文件路径
-    file_path_pattern = os.path.join(DATA_DIR, f"*{user_id}.json")
+        # 读取第一个匹配的文件
+        file_path = glob.glob(file_path_pattern)[0]
 
-    # 读取第一个匹配的文件
-    file_path = glob.glob(file_path_pattern)[0]
+        # 加载课表数据
+        schedule_data = load_schedule_from_file(file_path)
 
-    # 加载课表数据
-    schedule_data = load_schedule_from_file(file_path)
+        # 设置开学日期
+        start_date = datetime(2024, 8, 26)
 
-    # 检查课表数据是否加载成功
-    if "error" in schedule_data:
+        # 获取今日课表
+        message = f"[CQ:reply,id={message_id}]"
+
+        message += get_today_schedule(schedule_data, start_date, datetime.now())
+
+        # 发送今日课表
+        await send_group_msg(websocket, group_id, message)
+    except IndexError:
         await send_group_msg(
-            websocket,
-            group_id,
-            f"[CQ:reply,id={message_id}]课程表功能处理失败，请联系开发者处理，发送“owner”联系开发者QQ\n\n{schedule_data['error']}",
+            websocket, group_id, f"[CQ:reply,id={message_id}]未找到匹配的课表文件"
         )
-        return
-
-    # 设置开学日期
-    start_date = datetime(2024, 8, 26)
-
-    # 获取今日课表
-    message = f"[CQ:reply,id={message_id}]"
-
-    message += get_today_schedule(schedule_data, start_date, datetime.now())
-
-    # 发送今日课表
-    await send_group_msg(websocket, group_id, message)
+    except FileNotFoundError:
+        await send_group_msg(
+            websocket, group_id, f"[CQ:reply,id={message_id}]课表文件不存在"
+        )
+    except Exception as e:
+        await send_group_msg(
+            websocket, group_id, f"[CQ:reply,id={message_id}]发生错误: {str(e)}"
+        )
 
 
 # 群消息处理函数
