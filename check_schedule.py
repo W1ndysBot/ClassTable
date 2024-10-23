@@ -21,8 +21,21 @@ def print_schedule(schedule):
 
 
 def load_schedule_from_file(file_path):
-    with open(file_path, "r", encoding="utf-8") as file:
-        return json.load(file)
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        error_message = f"文件未找到: {file_path}"
+        logging.error(error_message)
+        return {"error": error_message}
+    except json.JSONDecodeError:
+        error_message = f"JSON解码错误: {file_path}"
+        logging.error(error_message)
+        return {"error": error_message}
+    except Exception as e:
+        error_message = f"加载课表文件时发生未知错误: {e}"
+        logging.error(error_message)
+        return {"error": error_message}
 
 
 def calculate_current_week(start_date, current_date):
@@ -93,6 +106,30 @@ def check_for_reminders(
 
     logging.info(f"{group_id}的{user_id}没有符合条件的课程")
     return None  # 确保在没有符合条件的课程时返回None
+
+
+def get_today_schedule(schedule, start_date=datetime(2024, 8, 26), test_time=None):
+    current_time = test_time or datetime.now()
+    current_week = calculate_current_week(start_date, current_time)
+    current_day = str(current_time.weekday() + 1)
+
+    result = ""
+
+    if current_week in schedule and current_day in schedule[current_week]:
+        periods = schedule[current_week][current_day]
+        result += f"今日课表 (周次: {current_week}, 星期: {current_day}):\n"
+        for period, classes in periods.items():
+            # result += f"  节次: {period}\n"
+            for course in classes:
+                result += "====================\n"
+                result += f"课程: {course['courseName']}\n"
+                result += f"地点: {course['room']}\n"
+                result += f"教师: {course['teacher']}\n"
+                result += f"时间: {course['startTime']}-{course['endTime']}\n"
+    else:
+        result += "今日无课程安排。"
+
+    return result
 
 
 # # 从文件加载课程表数据

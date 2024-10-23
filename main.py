@@ -4,10 +4,11 @@
 import logging
 import os
 import sys
-import asyncio
+
 import re
 import aiohttp
 import json
+import glob
 
 # 添加项目根目录到sys.path
 sys.path.append(
@@ -61,10 +62,47 @@ async def classtable_menu(websocket, group_id, message_id):
         websocket,
         group_id,
         f"[CQ:reply,id={message_id}]本功能通过wakeup课程表APP的API抓包导入\n"
-        + f"如需订阅提醒请把你的wakeup课程表分享链接发到群里，卷卷会自动识别并调用导入\n"
-        + f"如需取消订阅，请发送“取消课程表订阅”或“classtableoff”\n"
-        + f"开源地址：https://github.com/W1ndys-bot/ClassTable",
+        + f"使用方法：\n"
+        + f"1. 打开wakeup课程表APP，点击右上角第二个按钮，选择从分享口令导入\n"
+        + f"2. 复制分享口令，发送在群里\n"
+        + f"3. 卷卷会自动识别并导入课程表\n"
+        + f"4. 导入成功后，卷卷会自动撤回分享口令\n"
+        + f"取消订阅：发送“取消课程表订阅”或“classtableoff”\n"
+        + f"查看今日课表：发送“今日课表”或“classtabletoday”\n",
     )
+
+
+# 查看今日课表
+async def check_today_course_schedule(websocket, user_id, group_id, message_id):
+
+    # 正则匹配课表文件路径
+    file_path_pattern = os.path.join(DATA_DIR, f"*{user_id}.json")
+
+    # 读取第一个匹配的文件
+    file_path = glob.glob(file_path_pattern)[0]
+
+    # 加载课表数据
+    schedule_data = load_schedule_from_file(file_path)
+
+    # 检查课表数据是否加载成功
+    if "error" in schedule_data:
+        await send_group_msg(
+            websocket,
+            group_id,
+            f"[CQ:reply,id={message_id}]课程表功能处理失败，请联系开发者处理，发送“owner”联系开发者QQ\n\n{schedule_data['error']}",
+        )
+        return
+
+    # 设置开学日期
+    start_date = datetime(2024, 8, 26)
+
+    # 获取今日课表
+    message = f"[CQ:reply,id={message_id}]"
+
+    message += get_today_schedule(schedule_data, start_date, datetime.now())
+
+    # 发送今日课表
+    await send_group_msg(websocket, group_id, message)
 
 
 # 群消息处理函数
@@ -82,6 +120,15 @@ async def handle_ClassTable_group_message(websocket, msg):
         # 课程表菜单
         if raw_message == "classtable" or raw_message == "课程表":
             await classtable_menu(websocket, group_id, message_id)
+            return
+
+        # 查看今日课表
+        if (
+            raw_message == "查看今日课表"
+            or raw_message == "今日课表"
+            or raw_message == "classtabletoday"
+        ):
+            await check_today_course_schedule(websocket, user_id, group_id, message_id)
             return
 
         # 取消该群订阅
@@ -166,7 +213,7 @@ async def handle_ClassTable_group_message(websocket, msg):
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]导入课程表失败，请联系开发者处理，发送“owner”联系开发者QQ\n\n"
+            f"[CQ:reply,id={message_id}]课程表功能处理失败，请联系开发者处理，发送“owner”联系开发者QQ\n\n"
             + f"错误信息: {e}",
         )
 
@@ -192,10 +239,11 @@ async def check_and_push_course_schedule(websocket):
             file_path = os.path.join(DATA_DIR, file)
             schedule_data = load_schedule_from_file(file_path)
 
+            logging.info(f"加载{user_id}在{group_id}的课程表完成")
+
             reminder_message = check_for_reminders(
                 user_id, group_id, schedule_data, start_date
             )
-            logging.info(f"加载{user_id}在{group_id}的课程表完成")
 
             if reminder_message:
                 reminder_message = f"[CQ:at,qq={user_id}]\n" + reminder_message
