@@ -223,7 +223,7 @@ async def handle_ClassTable_group_message(websocket, msg):
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]课程表功能处理失败，请联系开发者处理，发送“owner”联系开发者QQ\n\n"
+            f"[CQ:reply,id={message_id}]课程表功能处理失败，可能是wakeup课程表APP的服务器问题，请联系开发者处理，发送“owner”联系开发者QQ\n\n"
             + f"错误信息: {e}",
         )
 
