@@ -49,8 +49,9 @@ async def get_course_schedule_from_api(share_code):
         "Accept-Encoding": "gzip",
         "version": "243",
     }
+    timeout = aiohttp.ClientTimeout(total=5)  # 设置超时时间为5秒
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.get(url, headers=headers) as response:
             json_data = await response.json()
             return json_data
@@ -63,8 +64,8 @@ async def classtable_menu(websocket, group_id, message_id):
         group_id,
         f"[CQ:reply,id={message_id}]本功能通过wakeup课程表APP的API抓包导入\n"
         + f"使用方法：\n"
-        + f"1. 打开wakeup课程表APP，点击右上角第二个按钮，选择从分享口令导入\n"
-        + f"2. 复制分享口令，发送在群里\n"
+        + f"1. 打开wakeup课程表APP，点击右上角按钮\n"
+        + f"2. 复制分享口令，全部内容直接发送在群里\n"
         + f"3. 卷卷会自动识别并导入课程表\n"
         + f"4. 导入成功后，卷卷会自动撤回分享口令\n"
         + f"取消订阅：发送“取消课程表订阅”或“classtableoff”\n"
