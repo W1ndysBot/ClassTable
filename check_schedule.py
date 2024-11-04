@@ -71,9 +71,10 @@ def check_for_reminders(
                     if previous_period in periods:
                         previous_classes = periods[previous_period]
                         for previous_course in previous_classes:
-                            logging.info(f"上一节课：{previous_course}")
-                            logging.info(f"当前课程：{course}")
-                            return None
+                            if pervoius_classes['courseName'] == course['courseName']:
+                                logging.info(f"上一节课：{previous_course}")
+                                logging.info(f"当前课程：{course}")
+                                return None
 
                     logging.info(
                         f"检测到{group_id}的{user_id}即将开始{course['courseName']}"
