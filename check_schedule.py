@@ -32,6 +32,8 @@ def calculate_current_week(start_date, current_date):
 
 
 def check_for_reminders(user_id, group_id, schedule, start_date=datetime(2024, 8, 26)):
+
+    # 当前时间
     current_time = datetime.now()
 
     current_week = calculate_current_week(start_date, current_time)
