@@ -233,6 +233,10 @@ async def check_and_push_course_schedule(websocket):
     # 设置开学日期
     start_date = datetime(2024, 8, 26)
 
+    # 整十分钟执行
+    if datetime.now().minute % 10 != 0:
+        return
+
     # 遍历所有保存的文件
     for file in os.listdir(DATA_DIR):
         if file.endswith(".json"):
@@ -243,7 +247,7 @@ async def check_and_push_course_schedule(websocket):
             file_path = os.path.join(DATA_DIR, file)
             schedule_data = load_schedule_from_file(file_path)
 
-            logging.info(f"加载{user_id}在{group_id}的课程表完成")
+            # logging.info(f"加载{user_id}在{group_id}的课程表完成")
 
             reminder_message = check_for_reminders(
                 user_id, group_id, schedule_data, start_date
