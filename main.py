@@ -8,7 +8,7 @@ import sys
 import re
 import aiohttp
 import json
-import glob
+
 
 # 添加项目根目录到sys.path
 sys.path.append(
@@ -77,10 +77,7 @@ async def classtable_menu(websocket, group_id, message_id):
 async def check_today_course_schedule(websocket, user_id, group_id, message_id):
     try:
         # 正则匹配课表文件路径
-        file_path_pattern = os.path.join(DATA_DIR, f"*{user_id}.json")
-
-        # 读取第一个匹配的文件
-        file_path = glob.glob(file_path_pattern)[0]
+        file_path = os.path.join(DATA_DIR, f"{group_id}_{user_id}.json")
 
         # 加载课表数据
         schedule_data = load_schedule_from_file(file_path)
@@ -99,19 +96,19 @@ async def check_today_course_schedule(websocket, user_id, group_id, message_id):
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]未找到匹配的课表文件，发送“classtable”或“课程表”查看说明",
+            f"[CQ:reply,id={message_id}]未找到群{group_id}的{user_id}的课表文件，发送“classtable”或“课程表”查看说明",
         )
     except FileNotFoundError:
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]课表文件不存在，发送“classtable”或“课程表”查看说明",
+            f"[CQ:reply,id={message_id}]群{group_id}的{user_id}的课表文件不存在，发送“classtable”或“课程表”查看说明",
         )
     except Exception as e:
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]发生错误: {str(e)}\n\n发送“classtable”或“课程表”查看说明",
+            f"[CQ:reply,id={message_id}]读取群{group_id}的{user_id}的课表文件发生错误: {str(e)}\n\n发送“classtable”或“课程表”查看说明",
         )
 
 
@@ -235,9 +232,6 @@ async def check_and_push_course_schedule(websocket):
 
     # 设置开学日期
     start_date = datetime(2024, 8, 26)
-
-    # 设置测试时间（例如，设置为某个特定的时间）
-    # test_time = datetime.now().replace(hour=13, minute=45)
 
     # 遍历所有保存的文件
     for file in os.listdir(DATA_DIR):
