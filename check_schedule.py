@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 
 
@@ -31,10 +31,8 @@ def calculate_current_week(start_date, current_date):
     return str(current_week)
 
 
-def check_for_reminders(
-    user_id, group_id, schedule, start_date=datetime(2024, 8, 26), test_time=None
-):
-    current_time = test_time or datetime.now()
+def check_for_reminders(user_id, group_id, schedule, start_date=datetime(2024, 8, 26)):
+    current_time = datetime.now()
 
     current_week = calculate_current_week(start_date, current_time)
 
@@ -71,12 +69,17 @@ def check_for_reminders(
                     if previous_period in periods:
                         previous_classes = periods[previous_period]
                         for previous_course in previous_classes:
-                            if pervoius_classes['courseName'] == course['courseName']:
-                                logging.info(f"上一节课：{previous_course}，与当前课程一直，跳过提醒")
+                            if (
+                                previous_course["courseName"] == course["courseName"]
+                                and previous_course["room"] == course["room"]
+                            ):
+                                logging.info(
+                                    f"[ClassTable]群{group_id}的{user_id}的上一节课：{previous_course}，与当前课程{course}相同，跳过提醒"
+                                )
                                 return None
 
                     logging.info(
-                        f"检测到{group_id}的{user_id}即将开始{course['courseName']}"
+                        f"[ClassTable]检测到群{group_id}的{user_id}即将开始{course['courseName']}"
                     )
 
                     return (
@@ -91,7 +94,7 @@ def check_for_reminders(
                         + f"技术支持：www.w1ndys.top"
                     )
 
-    logging.info(f"{group_id}的{user_id}没有符合条件的课程")
+    logging.info(f"[ClassTable]群{group_id}的{user_id}没有符合条件的课程")
     return None  # 确保在没有符合条件的课程时返回None
 
 
