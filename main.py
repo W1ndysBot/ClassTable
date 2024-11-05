@@ -29,16 +29,6 @@ DATA_DIR = os.path.join(
 )
 
 
-# 查看功能开关状态
-def load_function_status(group_id):
-    return load_switch(group_id, "function_status")
-
-
-# 保存功能开关状态
-def save_function_status(group_id, status):
-    save_switch(group_id, "function_status", status)
-
-
 # 调用API返回json
 async def get_course_schedule_from_api(share_code):
 
@@ -96,19 +86,19 @@ async def check_today_course_schedule(websocket, user_id, group_id, message_id):
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]未找到群{group_id}的{user_id}的课表文件，发送“classtable”或“课程表”查看说明",
+            f"[CQ:reply,id={message_id}]未找到群 {group_id} 的 {user_id} 的课表文件，发送“classtable”或“课程表”查看说明",
         )
     except FileNotFoundError:
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]群{group_id}的{user_id}的课表文件不存在，发送“classtable”或“课程表”查看说明",
+            f"[CQ:reply,id={message_id}]群 {group_id} 的 {user_id} 的课表文件不存在，发送“classtable”或“课程表”查看说明",
         )
     except Exception as e:
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]读取群{group_id}的{user_id}的课表文件发生错误: {str(e)}\n\n发送“classtable”或“课程表”查看说明",
+            f"[CQ:reply,id={message_id}]读取群 {group_id} 的 {user_id} 的课表文件发生错误: {str(e)}\n\n发送“classtable”或“课程表”查看说明",
         )
 
 
@@ -170,7 +160,9 @@ async def handle_ClassTable_group_message(websocket, msg):
             )
             if match:
 
-                logging.info(f"提取到{user_id}在{group_id}的分享口令: {match.group(1)}")
+                logging.info(
+                    f"提取到 {user_id} 在 {group_id} 的分享口令: {match.group(1)}"
+                )
 
                 share_code = match.group(1)
 
