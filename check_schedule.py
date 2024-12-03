@@ -91,7 +91,7 @@ def check_for_reminders(user_id, group_id, schedule, start_date=datetime(2024, 8
                         + f"技术支持：www.w1ndys.top"
                     )
 
-    logging.info(f"[ClassTable]群{group_id}的{user_id}没有符合条件的课程")
+    # logging.info(f"[ClassTable]群{group_id}的{user_id}没有符合条件的课程")
     return None  # 确保在没有符合条件的课程时返回None
 
 
