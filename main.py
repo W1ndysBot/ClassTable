@@ -147,7 +147,7 @@ async def handle_ClassTable_group_message(websocket, msg):
             await delete_msg(websocket, message_id)
 
             # 发出检测到分享口令的提示
-            await send_group_msg_with_reply(
+            await send_group_msg(
                 websocket,
                 group_id,
                 f"[CQ:reply,id={message_id}][+]检测到分享口令，正在请求API，为避免口令泄露，请确定自行撤回分享口令",
