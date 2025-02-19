@@ -73,7 +73,7 @@ async def check_today_course_schedule(websocket, user_id, group_id, message_id):
         schedule_data = load_schedule_from_file(file_path)
 
         # 设置开学日期
-        start_date = datetime(2024, 8, 26)
+        start_date = datetime(2025, 2, 17)
 
         # 获取今日课表
         message = f"[CQ:reply,id={message_id}]"
@@ -273,10 +273,7 @@ async def handle_events(websocket, msg):
                 message_id = str(msg.get("message_id", ""))
                 raw_message = str(msg.get("raw_message", ""))
                 user_id = str(msg.get("user_id", ""))
-
-                # 处理课程表相关命令
-                if raw_message.startswith("课程表"):
-                    await handle_ClassTable_group_message(websocket, msg)
+                await handle_ClassTable_group_message(websocket, msg)
             elif message_type == "private":
                 return
 
