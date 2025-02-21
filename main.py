@@ -59,8 +59,8 @@ async def classtable_menu(websocket, group_id, message_id):
         + f"2. 复制分享口令，全部内容直接发送在群里\n"
         + f"3. 卷卷会自动识别并导入课程表\n"
         + f"4. 导入成功后，卷卷会自动撤回分享口令\n"
-        + f"取消订阅：发送"取消课程表订阅"或"classtableoff"\n"
-        + f"查看今日课表：发送"今日课表"或"classtabletoday"\n",
+        + f"取消订阅：发送【取消课程表订阅】或【classtableoff】\n"
+        + f"查看今日课表：发送【今日课表】或【classtabletoday】\n",
     )
 
 
@@ -87,64 +87,62 @@ async def check_today_course_schedule(websocket, user_id, group_id, message_id):
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]未找到群 {group_id} 的 {user_id} 的课表文件，发送"classtable"或"课程表"查看说明",
+            f"[CQ:reply,id={message_id}]未找到群 {group_id} 的 {user_id} 的课表文件，发送【classtable】或【课程表】查看说明",
         )
     except FileNotFoundError:
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]群 {group_id} 的 {user_id} 的课表文件不存在，发送"classtable"或"课程表"查看说明",
+            f"[CQ:reply,id={message_id}]群 {group_id} 的 {user_id} 的课表文件不存在，发送【classtable】或【课程表】查看说明",
         )
     except Exception as e:
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]读取群 {group_id} 的 {user_id} 的课表文件发生错误: {str(e)}\n\n发送"classtable"或"课程表"查看说明",
+            f"[CQ:reply,id={message_id}]读取群 {group_id} 的 {user_id} 的课表文件发生错误: {str(e)}\n\n发送【classtable】或【课程表】查看说明",
         )
 
 
 # 查看指定日期课表
-async def check_date_course_schedule(websocket, user_id, group_id, message_id, date_offset):
+async def check_date_course_schedule(
+    websocket, user_id, group_id, message_id, date_offset
+):
     try:
         file_path = os.path.join(DATA_DIR, f"{group_id}_{user_id}.json")
         schedule_data = load_schedule_from_file(file_path)
-        
+
         # 设置开学日期
         start_date = datetime(2025, 2, 17)
-        
+
         # 计算目标日期
         target_date = datetime.now() + timedelta(days=date_offset)
-        
+
         # 获取日期描述
-        date_desc = {
-            -2: "前日",
-            -1: "昨日",
-            0: "今日",
-            1: "明日",
-            2: "后日"
-        }[date_offset]
-        
+        date_desc = {-2: "前日", -1: "昨日", 0: "今日", 1: "明日", 2: "后日"}[
+            date_offset
+        ]
+
         message = f"[CQ:reply,id={message_id}]{date_desc}({target_date.strftime('%Y-%m-%d')})课表：\n"
         message += get_today_schedule(schedule_data, start_date, target_date)
-        
+
         await send_group_msg(websocket, group_id, message)
     except IndexError:
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]未找到群 {group_id} 的 {user_id} 的课表文件，发送"classtable"或"课程表"查看说明",
+            f"[CQ:reply,id={message_id}]未找到群 {group_id} 的 {user_id} 的课表文件，发送【classtable】或【课程表】查看说明",
         )
     except FileNotFoundError:
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]群 {group_id} 的 {user_id} 的课表文件不存在，发送"classtable"或"课程表"查看说明",
+            f"[CQ:reply,id={message_id}]群 {group_id} 的 {user_id} 的课表文件不存在，发送【classtable】或【课程表】查看说明",
         )
     except Exception as e:
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]读取群 {group_id} 的 {user_id} 的课表文件发生错误: {str(e)}\n\n发送"classtable"或"课程表"查看说明",
+            f"[CQ:reply,id={message_id}]读取群 {group_id} 的 {user_id} 的课表文件发生错误: {str(e)}\n\n发送【classtable】或【课程表】查看说明",
         )
 
 
@@ -176,14 +174,10 @@ async def handle_ClassTable_group_message(websocket, msg):
             "classtabletoday": 0,
             "classtabletomorrow": 1,
         }
-        
+
         if raw_message in date_commands:
             await check_date_course_schedule(
-                websocket, 
-                user_id, 
-                group_id, 
-                message_id, 
-                date_commands[raw_message]
+                websocket, user_id, group_id, message_id, date_commands[raw_message]
             )
             return
 
@@ -271,7 +265,7 @@ async def handle_ClassTable_group_message(websocket, msg):
         await send_group_msg(
             websocket,
             group_id,
-            f"[CQ:reply,id={message_id}]课程表功能处理失败，可能是wakeup课程表APP的服务器问题，请联系开发者处理，发送"owner"联系开发者QQ\n\n"
+            f"[CQ:reply,id={message_id}]课程表功能处理失败，可能是wakeup课程表APP的服务器问题，请联系开发者处理，发送【owner】联系开发者QQ\n\n"
             + f"错误信息: {e}",
         )
 
