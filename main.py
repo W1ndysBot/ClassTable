@@ -59,8 +59,8 @@ async def classtable_menu(websocket, group_id, message_id):
         + f"2. 复制分享口令，全部内容直接发送在群里\n"
         + f"3. 卷卷会自动识别并导入课程表\n"
         + f"4. 导入成功后，卷卷会自动撤回分享口令\n"
-        + f"取消订阅：发送"取消课程表订阅"或"classtableoff"\n"
-        + f"查看今日课表：发送"今日课表"或"classtabletoday"\n",
+        + f"取消订阅：发送【取消课程表订阅】或【classtableoff】\n"
+        + f"查看今日课表：发送【今日课表】或【classtabletoday】\n",
     )
 
 
