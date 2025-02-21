@@ -263,6 +263,7 @@ async def handle_events(websocket, msg):
 
         # 处理元事件
         if post_type == "meta_event":
+            await check_and_push_course_schedule(websocket)
             return
 
         # 处理消息事件
