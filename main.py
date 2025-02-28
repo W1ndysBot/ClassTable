@@ -29,6 +29,9 @@ DATA_DIR = os.path.join(
     "ClassTable",
 )
 
+# 设置开学日期为全局常量
+SEMESTER_START_DATE = datetime(2025, 2, 17)
+
 
 # 调用API返回json
 async def get_course_schedule_from_api(share_code):
@@ -73,13 +76,10 @@ async def check_today_course_schedule(websocket, user_id, group_id, message_id):
         # 加载课表数据
         schedule_data = load_schedule_from_file(file_path)
 
-        # 设置开学日期
-        start_date = datetime(2025, 2, 17)
-
         # 获取今日课表
         message = f"[CQ:reply,id={message_id}]"
 
-        message += get_today_schedule(schedule_data, start_date, datetime.now())
+        message += get_today_schedule(schedule_data, SEMESTER_START_DATE, datetime.now())
 
         # 发送今日课表
         await send_group_msg(websocket, group_id, message)
@@ -111,9 +111,6 @@ async def check_date_course_schedule(
         file_path = os.path.join(DATA_DIR, f"{group_id}_{user_id}.json")
         schedule_data = load_schedule_from_file(file_path)
 
-        # 设置开学日期
-        start_date = datetime(2025, 2, 17)
-
         # 计算目标日期
         target_date = datetime.now() + timedelta(days=date_offset)
 
@@ -123,7 +120,7 @@ async def check_date_course_schedule(
         ]
 
         message = f"[CQ:reply,id={message_id}]{date_desc}({target_date.strftime('%Y-%m-%d')})课表：\n"
-        message += get_today_schedule(schedule_data, start_date, target_date)
+        message += get_today_schedule(schedule_data, SEMESTER_START_DATE, target_date)
 
         await send_group_msg(websocket, group_id, message)
     except IndexError:
@@ -275,9 +272,6 @@ async def handle_ClassTable_group_message(websocket, msg):
 # 定时监控推送函数
 async def check_and_push_course_schedule(websocket):
 
-    # 设置开学日期
-    start_date = datetime(2024, 8, 26)
-
     # 整十分钟执行
     if datetime.now().minute % 10 != 0:
         return
@@ -295,7 +289,7 @@ async def check_and_push_course_schedule(websocket):
             # logging.info(f"加载{user_id}在{group_id}的课程表完成")
 
             reminder_message = check_for_reminders(
-                user_id, group_id, schedule_data, start_date
+                user_id, group_id, schedule_data, SEMESTER_START_DATE
             )
 
             if reminder_message:
