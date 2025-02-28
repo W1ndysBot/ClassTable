@@ -79,7 +79,9 @@ async def check_today_course_schedule(websocket, user_id, group_id, message_id):
         # 获取今日课表
         message = f"[CQ:reply,id={message_id}]"
 
-        message += get_today_schedule(schedule_data, SEMESTER_START_DATE, datetime.now())
+        message += get_today_schedule(
+            schedule_data, SEMESTER_START_DATE, datetime.now()
+        )
 
         # 发送今日课表
         await send_group_msg(websocket, group_id, message)
@@ -196,23 +198,12 @@ async def handle_ClassTable_group_message(websocket, msg):
             # 撤回消息
             await delete_msg(websocket, message_id)
 
-            # 发出检测到分享口令的提示
-            await send_group_msg(
-                websocket,
-                group_id,
-                f"[CQ:reply,id={message_id}][+]检测到分享口令，正在请求API，为避免口令泄露，请确定自行撤回分享口令",
-            )
-
             # 提取分享口令
             match = re.search(
                 r"这是来自「WakeUp课程表」的课表分享，30分钟内有效哦，如果失效请朋友再分享一遍叭。为了保护隐私我们选择不监听你的剪贴板，请复制这条消息后，打开App的主界面，右上角第二个按钮 -> 从分享口令导入，按操作提示即可完成导入~分享口令为「(.*)」",
                 raw_message,
             )
             if match:
-
-                logging.info(
-                    f"提取到 {user_id} 在 {group_id} 的分享口令: {match.group(1)}"
-                )
 
                 share_code = match.group(1)
 
@@ -236,8 +227,6 @@ async def handle_ClassTable_group_message(websocket, msg):
                     ) as file:
                         json.dump(course_schedule, file, ensure_ascii=False, indent=4)
 
-                    logging.info(f"保存课程表到文件完成")
-
                     share_code = (
                         share_code[:2] + "*" * (len(share_code) - 4) + share_code[-2:]
                     )
@@ -245,7 +234,11 @@ async def handle_ClassTable_group_message(websocket, msg):
                     await send_group_msg(
                         websocket,
                         group_id,
-                        f"[CQ:reply,id={message_id}]导入课程表成功，重复导入将会覆盖之前的数据，你的分享口令是{share_code}",
+                        f"[CQ:reply,id={message_id}]导入课程表成功，重复导入将会覆盖之前的数据，你的分享口令是{share_code}\n\n"
+                        + f"支持的命令：\n"
+                        + f"取消订阅：发送【取消课程表订阅】或【classtableoff】\n"
+                        + f"查看今日课表：发送【今日课表】或【classtabletoday】\n"
+                        + f"查看指定日期课表：发送【前日课表】或【昨日课表】或【今日课表】或【明日课表】或【后日课表】\n",
                     )
 
                 else:
