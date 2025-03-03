@@ -264,7 +264,6 @@ async def handle_ClassTable_group_message(websocket, msg):
 
 # 定时监控推送函数
 async def check_and_push_course_schedule(websocket):
-
     # 整十分钟执行
     if datetime.now().minute % 10 != 0:
         return
@@ -272,49 +271,185 @@ async def check_and_push_course_schedule(websocket):
     # 遍历所有保存的文件
     for file in os.listdir(DATA_DIR):
         if file.endswith(".json"):
-            # 解析文件名，提取群号和QQ号
-            group_id = file.split("_")[0]
-            user_id = file.split("_")[1].split(".")[0]
-
             file_path = os.path.join(DATA_DIR, file)
-            schedule_data = load_schedule_from_file(file_path)
 
-            # logging.info(f"加载{user_id}在{group_id}的课程表完成")
+            # 解析文件名
+            if "_" in file:  # 群聊格式：group_id_user_id.json
+                group_id = file.split("_")[0]
+                user_id = file.split("_")[1].split(".")[0]
 
-            reminder_message = check_for_reminders(
-                user_id, group_id, schedule_data, SEMESTER_START_DATE
+                schedule_data = load_schedule_from_file(file_path)
+                reminder_message = check_for_reminders(
+                    user_id, group_id, schedule_data, SEMESTER_START_DATE
+                )
+
+                if reminder_message:
+                    reminder_message = f"[CQ:at,qq={user_id}]\n" + reminder_message
+                    await send_group_msg(websocket, group_id, reminder_message)
+
+            else:  # 私聊格式：user_id.json
+                user_id = file.split(".")[0]
+
+                schedule_data = load_schedule_from_file(file_path)
+                reminder_message = check_for_reminders(
+                    user_id, None, schedule_data, SEMESTER_START_DATE
+                )
+
+                if reminder_message:
+                    await send_private_msg(websocket, user_id, reminder_message)
+
+
+# 处理私聊消息函数
+async def handle_ClassTable_private_message(websocket, msg):
+    try:
+        user_id = str(msg.get("user_id"))
+        raw_message = str(msg.get("raw_message"))
+        message_id = str(msg.get("message_id"))
+
+        # 课程表菜单
+        if raw_message == "classtable" or raw_message == "课程表":
+            await send_private_msg(
+                websocket,
+                user_id,
+                f"[CQ:reply,id={message_id}]本功能通过wakeup课程表APP的API抓包导入\n"
+                + f"使用方法：\n"
+                + f"1. 打开wakeup课程表APP，点击右上角按钮\n"
+                + f"2. 复制分享口令，全部内容直接发送给我\n"
+                + f"3. 我会自动识别并导入课程表\n"
+                + f"4. 导入成功后，我会自动撤回分享口令\n"
+                + f"取消订阅：发送【取消课程表订阅】或【classtableoff】\n"
+                + f"查看今日课表：发送【今日课表】或【classtabletoday】\n",
             )
+            return
 
-            if reminder_message:
-                reminder_message = f"[CQ:at,qq={user_id}]\n" + reminder_message
-                await send_group_msg(websocket, group_id, reminder_message)
+        # 查看不同日期的课表
+        date_commands = {
+            "前日课表": -2,
+            "昨日课表": -1,
+            "今日课表": 0,
+            "明日课表": 1,
+            "后日课表": 2,
+            "classtableyesterday": -1,
+            "classtabletoday": 0,
+            "classtabletomorrow": 1,
+        }
+
+        if raw_message in date_commands:
+            try:
+                file_path = os.path.join(DATA_DIR, f"{user_id}.json")
+                schedule_data = load_schedule_from_file(file_path)
+
+                target_date = datetime.now() + timedelta(
+                    days=date_commands[raw_message]
+                )
+                date_desc = {-2: "前日", -1: "昨日", 0: "今日", 1: "明日", 2: "后日"}[
+                    date_commands[raw_message]
+                ]
+
+                message = f"[CQ:reply,id={message_id}]{date_desc}({target_date.strftime('%Y-%m-%d')})课表：\n"
+                message += get_today_schedule(
+                    schedule_data, SEMESTER_START_DATE, target_date
+                )
+
+                await send_private_msg(websocket, user_id, message)
+            except (IndexError, FileNotFoundError):
+                await send_private_msg(
+                    websocket,
+                    user_id,
+                    f"[CQ:reply,id={message_id}]未找到你的课表文件，发送【classtable】或【课程表】查看说明",
+                )
+            return
+
+        # 取消订阅
+        if raw_message == "取消课程表订阅" or raw_message == "classtableoff":
+            try:
+                os.remove(os.path.join(DATA_DIR, f"{user_id}.json"))
+                await send_private_msg(
+                    websocket,
+                    user_id,
+                    f"[CQ:reply,id={message_id}]已取消订阅课程表",
+                )
+            except FileNotFoundError:
+                await send_private_msg(
+                    websocket,
+                    user_id,
+                    f"[CQ:reply,id={message_id}]你还没有订阅课程表",
+                )
+            return
+
+        # 添加课程表
+        if raw_message.startswith("这是来自「WakeUp课程表」的课表分享，30分钟内有效哦"):
+            # 提取分享口令
+            match = re.search(r"分享口令为「(.*)」", raw_message)
+            if match:
+                share_code = match.group(1)
+                json_data = await get_course_schedule_from_api(share_code)
+
+                if (
+                    json_data["status"] == "1"
+                    and json_data["message"] == "success"
+                    and json_data["data"] != ""
+                ):
+                    course_schedule = generate_course_schedule_from_data(json_data)
+
+                    with open(
+                        os.path.join(DATA_DIR, f"{user_id}.json"),
+                        "w",
+                        encoding="utf-8",
+                    ) as file:
+                        json.dump(course_schedule, file, ensure_ascii=False, indent=4)
+
+                    share_code = (
+                        share_code[:2] + "*" * (len(share_code) - 4) + share_code[-2:]
+                    )
+
+                    await send_private_msg(
+                        websocket,
+                        user_id,
+                        f"[CQ:reply,id={message_id}]导入课程表成功，重复导入将会覆盖之前的数据，你的分享口令是{share_code}\n\n"
+                        + f"支持的命令：\n"
+                        + f"取消订阅：发送【取消课程表订阅】或【classtableoff】\n"
+                        + f"查看今日课表：发送【今日课表】或【classtabletoday】\n"
+                        + f"查看指定日期课表：发送【前日课表】或【昨日课表】或【今日课表】或【明日课表】或【后日课表】\n",
+                    )
+                else:
+                    logging.warning(f"导入课程表失败: {json_data}")
+                    await send_private_msg(
+                        websocket,
+                        user_id,
+                        f"[CQ:reply,id={message_id}]导入课程表失败，请检查分享口令是否正确或是否已过期\n\n"
+                        + f"错误返回值: {json_data}",
+                    )
+
+    except Exception as e:
+        logging.error(f"处理ClassTable私聊消息失败: {e}")
+        await send_private_msg(
+            websocket,
+            user_id,
+            f"课程表功能处理失败，请联系开发者处理，发送【owner】联系开发者QQ\n\n"
+            + f"错误信息: {e}",
+        )
 
 
 # 统一事件处理入口
 async def handle_events(websocket, msg):
     """统一事件处理入口"""
-    post_type = msg.get("post_type", "response")  # 添加默认值
+    post_type = msg.get("post_type", "response")
     try:
-        # 处理回调事件
         if msg.get("status") == "ok":
             return
 
         post_type = msg.get("post_type")
 
-        # 处理元事件
         if post_type == "meta_event":
             await check_and_push_course_schedule(websocket)
             return
-
-        # 处理消息事件
         elif post_type == "message":
             message_type = msg.get("message_type")
             if message_type == "group":
                 await handle_ClassTable_group_message(websocket, msg)
             elif message_type == "private":
-                return
-
-        # 处理通知事件
+                await handle_ClassTable_private_message(websocket, msg)
         elif post_type == "notice":
             return
 
