@@ -306,6 +306,16 @@ async def handle_ClassTable_private_message(websocket, msg):
         raw_message = str(msg.get("raw_message"))
         message_id = str(msg.get("message_id"))
 
+        # 通知owner的函数
+        async def notify_owner(action):
+            if user_id == owner_id[0]:
+                return
+            await send_private_msg(
+                websocket,
+                owner_id[0],
+                f"用户 {user_id} 在私聊中{action}",
+            )
+
         # 课程表菜单
         if raw_message == "classtable" or raw_message == "课程表":
             await send_private_msg(
@@ -320,6 +330,7 @@ async def handle_ClassTable_private_message(websocket, msg):
                 + f"取消订阅：发送【取消课程表订阅】或【classtableoff】\n"
                 + f"查看今日课表：发送【今日课表】或【classtabletoday】\n",
             )
+            await notify_owner("查看了课程表菜单")
             return
 
         # 查看不同日期的课表
@@ -352,12 +363,14 @@ async def handle_ClassTable_private_message(websocket, msg):
                 )
 
                 await send_private_msg(websocket, user_id, message)
+                await notify_owner(f"查看了{date_desc}课表")
             except (IndexError, FileNotFoundError):
                 await send_private_msg(
                     websocket,
                     user_id,
                     f"[CQ:reply,id={message_id}]未找到你的课表文件，发送【classtable】或【课程表】查看说明",
                 )
+                await notify_owner("尝试查看课表失败：未找到课表文件")
             return
 
         # 取消订阅
@@ -369,12 +382,14 @@ async def handle_ClassTable_private_message(websocket, msg):
                     user_id,
                     f"[CQ:reply,id={message_id}]已取消订阅课程表",
                 )
+                await notify_owner("取消了课程表订阅")
             except FileNotFoundError:
                 await send_private_msg(
                     websocket,
                     user_id,
                     f"[CQ:reply,id={message_id}]你还没有订阅课程表",
                 )
+                await notify_owner("尝试取消订阅失败：未找到课表文件")
             return
 
         # 添加课程表
@@ -399,19 +414,20 @@ async def handle_ClassTable_private_message(websocket, msg):
                     ) as file:
                         json.dump(course_schedule, file, ensure_ascii=False, indent=4)
 
-                    share_code = (
+                    masked_share_code = (
                         share_code[:2] + "*" * (len(share_code) - 4) + share_code[-2:]
                     )
 
                     await send_private_msg(
                         websocket,
                         user_id,
-                        f"[CQ:reply,id={message_id}]导入课程表成功，重复导入将会覆盖之前的数据，你的分享口令是{share_code}\n\n"
+                        f"[CQ:reply,id={message_id}]导入课程表成功，重复导入将会覆盖之前的数据，你的分享口令是{masked_share_code}\n\n"
                         + f"支持的命令：\n"
                         + f"取消订阅：发送【取消课程表订阅】或【classtableoff】\n"
                         + f"查看今日课表：发送【今日课表】或【classtabletoday】\n"
                         + f"查看指定日期课表：发送【前日课表】或【昨日课表】或【今日课表】或【明日课表】或【后日课表】\n",
                     )
+                    await notify_owner(f"导入了新的课程表，分享码：{masked_share_code}")
                 else:
                     logging.warning(f"导入课程表失败: {json_data}")
                     await send_private_msg(
@@ -420,14 +436,21 @@ async def handle_ClassTable_private_message(websocket, msg):
                         f"[CQ:reply,id={message_id}]导入课程表失败，请检查分享口令是否正确或是否已过期\n\n"
                         + f"错误返回值: {json_data}",
                     )
+                    await notify_owner("尝试导入课表失败：API返回错误")
 
     except Exception as e:
-        logging.error(f"处理ClassTable私聊消息失败: {e}")
+        error_msg = f"处理ClassTable私聊消息失败: {e}"
+        logging.error(error_msg)
         await send_private_msg(
             websocket,
             user_id,
             f"课程表功能处理失败，请联系开发者处理，发送【owner】联系开发者QQ\n\n"
             + f"错误信息: {e}",
+        )
+        await send_private_msg(
+            websocket,
+            owner_id,
+            f"用户 {user_id} 使用课程表功能时发生错误：\n{error_msg}",
         )
 
 
