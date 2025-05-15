@@ -88,8 +88,7 @@ def check_for_reminders(
                         + f"教师: {course['teacher']}\n"
                         + f"开始时间: {course['startTime']}\n"
                         + f"=========课程提醒=========\n"
-                        + f"当前时间: {current_time.strftime('%H:%M')}\n"
-                        + f"技术支持：www.w1ndys.top"
+                        + f"当前时间: {current_time.strftime('%H:%M')}"
                     )
 
     print(f"[ClassTable]群{group_id}的{user_id}没有符合条件的课程")

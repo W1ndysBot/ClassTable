@@ -87,8 +87,7 @@ def check_for_reminders(user_id, group_id, schedule, start_date=datetime(2024, 8
                         + f"教师: {course['teacher']}\n"
                         + f"开始时间: {course['startTime']}\n"
                         + f"=========课程提醒=========\n"
-                        + f"当前时间: {current_time.strftime('%H:%M')}\n"
-                        + f"技术支持：www.w1ndys.top"
+                        + f"当前时间: {current_time.strftime('%H:%M')}"
                     )
 
     # logging.info(f"[ClassTable]群{group_id}的{user_id}没有符合条件的课程")
