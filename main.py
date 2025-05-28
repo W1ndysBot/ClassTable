@@ -284,7 +284,7 @@ async def check_and_push_course_schedule(websocket):
                 )
 
                 if reminder_message:
-                    reminder_message = f"[CQ:at,qq={user_id}]\n" + reminder_message
+                    reminder_message = f"[CQ:at,qq={user_id}]({user_id})\n" + reminder_message
                     await send_group_msg(websocket, group_id, reminder_message)
 
             else:  # 私聊格式：user_id.json
